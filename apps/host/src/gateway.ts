@@ -51,6 +51,8 @@ export interface GatewayOptions {
   readonly resumeGraceMs?: number | undefined;
   /** Serves a device's push stream (`stream:"push"`, and `/v1/push` on loopback); without it both are refused. */
   readonly push?: ((link: PushLink, owner: string) => void) | undefined;
+  /** Serves the discovery-only MCP stream under the client's key. */
+  readonly mcp?: ((link: PushLink, key: string) => void) | undefined;
   /**
    * This computer's own pairing offer, for the app that runs the host: `POST /v1/pair` opens one and `GET /v1/pair`
    * reports it, behind the same token as `/v1/hc` and never on the LAN listener. Without it both routes are absent.
@@ -216,6 +218,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       return;
     }
     if (secure.stream === "push") return servePush(secure);
+    if (secure.stream === "mcp") return serveMcp(secure);
     // A pairing session is not gated by authorize's session limit, yet the new device keeps it as its workspace.
     const room =
       secure.kind === SessionKind.Session ? undefined : requireWithin(e2ee.policy, "sessions", e2ee.sessions.count());
@@ -253,6 +256,16 @@ export function createGateway(options: GatewayOptions): Gateway {
       const key = base64urlEncode(secure.remoteStatic);
       e2ee.mesh?.recordClientSession(key);
       options.push(e2ee.sessions.guardPush(secure), key);
+    }
+  };
+
+  const serveMcp = (secure: SecureLink): void => {
+    if (e2ee === undefined || !e2ee.sessions.admitLimited(secure, e2ee.policy)) return;
+    if (options.mcp === undefined) secure.close(1011, "this host serves no mcp stream");
+    else {
+      const key = base64urlEncode(secure.remoteStatic);
+      e2ee.mesh?.recordClientSession(key);
+      options.mcp(e2ee.sessions.guardMcp(secure), key);
     }
   };
 
