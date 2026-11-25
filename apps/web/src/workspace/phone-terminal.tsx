@@ -53,6 +53,8 @@ export interface PhoneTerminalProps {
   readonly onSheet: (open: boolean) => void;
   /** Where this terminal registers its dictation for the shell's palette row and bound key; null while it takes none. */
   readonly dictate: RefObject<(() => void) | null>;
+  /** Reached by a push: slides in from the trailing edge; false on a cold open or switch. */
+  readonly arrive: boolean;
 }
 
 /** One session full screen on a phone, its terminal kept clear of the soft keyboard and the keys bar riding on it. */
@@ -71,7 +73,7 @@ export function PhoneTerminal(props: PhoneTerminalProps) {
     onNewInSpace,
     dictate,
   } = props;
-  const { sheet, onSheet } = props;
+  const { sheet, onSheet, arrive } = props;
   // Split focus (design proposal section 6): a split tab shows two of its panes at once, the open one in focus, until
   // one of them fills the screen; Back from there returns to the split.
   const [seen, setSeen] = useState<{ readonly open: string; readonly before: string | null }>({
@@ -203,125 +205,129 @@ export function PhoneTerminal(props: PhoneTerminalProps) {
   };
 
   return (
-    // isolate: the keys float above the terminal (z-10) but stay under a dialog and its backdrop, which portal to the body.
-    <div
-      ref={setScope}
-      className="relative isolate flex h-dvh min-h-0 flex-col bg-card pr-(--safe-right) pl-(--safe-left)"
-    >
-      <PhoneHeader
-        terminal={terminal}
-        terminals={terminals}
-        host={connection.hello.core.name}
-        tabTitle={tabTitle}
-        backTo={full && panes.length > 1 ? "Split" : backTo}
-        onBack={back}
-        onOpen={onOpen}
-        action={untyped ? null : <DictateButton voice={voice} target={title} ref={mic} />}
-      />
-      <ConnectionLine address={terminal.address} {...(offline ? {} : { connection })} />
-      {pair === null || panes.length > 2 ? (
-        <PaneSwitcher panes={panes} open={terminal.address} onOpen={onOpen} />
-      ) : null}
-      {/* The page's one main landmark: the terminal, under its header (#1378). */}
-      <main
-        className="relative flex min-h-0 flex-1 flex-col"
-        style={
-          keysOpen
-            ? {
-                paddingBottom: `calc(${keysBottom(keyboard.inset)} + ${barHeight > 0 ? `${barHeight}px` : KEYS_BAR_HEIGHT})`,
-              }
-            : undefined
-        }
+    // The clip keeps a push's first frames inside the screen (DESIGN.md 6). isolate: the keys float above the terminal
+    // (z-10) but stay under a dialog and its backdrop, which portal to the body.
+    <div className="h-dvh overflow-x-clip">
+      <div
+        ref={setScope}
+        {...(arrive ? {} : { "data-arrived": "" })}
+        className="motion-arrive relative isolate flex h-dvh min-h-0 flex-col bg-card pr-(--safe-right) pl-(--safe-left) [--arrive-from:translateX(100%)] [--arrive-duration:var(--duration-push)] [--arrive-ease:var(--ease-standard)]"
       >
-        {pair === null ? (
-          view(terminal, true)
-        ) : (
-          <SplitFocusView
-            pair={pair}
-            focused={terminal.address}
-            ratioKey={panes.join(" ")}
-            terminal={view}
-            onFocus={onOpen}
-            onExpand={(address) => {
-              setFull(true);
-              if (address !== terminal.address) onOpen(address);
+        <PhoneHeader
+          terminal={terminal}
+          terminals={terminals}
+          host={connection.hello.core.name}
+          tabTitle={tabTitle}
+          backTo={full && panes.length > 1 ? "Split" : backTo}
+          onBack={back}
+          onOpen={onOpen}
+          action={untyped ? null : <DictateButton voice={voice} target={title} ref={mic} />}
+        />
+        <ConnectionLine address={terminal.address} {...(offline ? {} : { connection })} />
+        {pair === null || panes.length > 2 ? (
+          <PaneSwitcher panes={panes} open={terminal.address} onOpen={onOpen} />
+        ) : null}
+        {/* The page's one main landmark: the terminal, under its header (#1378). */}
+        <main
+          className="relative flex min-h-0 flex-1 flex-col"
+          style={
+            keysOpen
+              ? {
+                  paddingBottom: `calc(${keysBottom(keyboard.inset)} + ${barHeight > 0 ? `${barHeight}px` : KEYS_BAR_HEIGHT})`,
+                }
+              : undefined
+          }
+        >
+          {pair === null ? (
+            view(terminal, true)
+          ) : (
+            <SplitFocusView
+              pair={pair}
+              focused={terminal.address}
+              ratioKey={panes.join(" ")}
+              terminal={view}
+              onFocus={onOpen}
+              onExpand={(address) => {
+                setFull(true);
+                if (address !== terminal.address) onOpen(address);
+              }}
+            />
+          )}
+          {browsing ? (
+            <p
+              role="status"
+              className="pointer-events-none absolute top-2 right-4 z-10 rounded-full border border-border bg-chrome/90 px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-lg backdrop-blur-md"
+            >
+              Read-only
+            </p>
+          ) : null}
+        </main>
+        {dictating ? (
+          // Dictation takes the keys' place, riding on the soft keyboard when it is up; the transcript is typed past the
+          // sticky modifiers, as written.
+          <VoiceDock
+            voice={voice}
+            target={title}
+            onType={(text) => {
+              port.current?.send(text);
+              port.current?.focus();
             }}
+            onClose={() => mic.current?.focus()}
+            className="pb-[max(0.5rem,var(--safe-bottom))]"
+            {...(keyboard.inset > 0 ? { style: { marginBottom: `${keyboard.inset}px` } } : {})}
+          />
+        ) : offline || ended ? null : (
+          // Before the tabs bar: docked, the keys sit under the terminal and over the bar (#2499).
+          <PhoneKeys
+            port={port}
+            open={keysOpen}
+            docked={docked}
+            inset={keyboard.inset}
+            host={host}
+            sticky={sticky}
+            terminals={terminals}
+            current={terminal.address}
+            onOpen={onOpen}
+            onMenu={(open) => {
+              hold(open);
+              setMenu(open);
+            }}
+            pad={pad}
+            onPad={setPad}
+            onBarHeight={setBarHeight}
+            onPacks={() => {
+              hold(true);
+              setPacks(true);
+            }}
+            browsing={browsing}
+            {...(mouseOnly ? { onKeys: setKeysShown } : { onBrowse: setBrowsing })}
           />
         )}
-        {browsing ? (
-          <p
-            role="status"
-            className="pointer-events-none absolute top-2 right-4 z-10 rounded-full border border-border bg-chrome/90 px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-lg backdrop-blur-md"
-          >
-            Read-only
-          </p>
+        {tabsBar ? (
+          <PhoneTabSwitcher
+            terminals={terminals}
+            tabs={tabs}
+            active={terminal.address}
+            title={tabTitle ?? title}
+            onOpen={onOpen}
+            clearance={ROUND_BUTTON_CLEARANCE}
+            onCloseTab={onCloseTab}
+            onNewInSpace={onNewInSpace}
+            sheet={sheet}
+            onSheet={onSheet}
+          />
         ) : null}
-      </main>
-      {dictating ? (
-        // Dictation takes the keys' place, riding on the soft keyboard when it is up; the transcript is typed past the
-        // sticky modifiers, as written.
-        <VoiceDock
-          voice={voice}
-          target={title}
-          onType={(text) => {
-            port.current?.send(text);
-            port.current?.focus();
-          }}
-          onClose={() => mic.current?.focus()}
-          className="pb-[max(0.5rem,var(--safe-bottom))]"
-          {...(keyboard.inset > 0 ? { style: { marginBottom: `${keyboard.inset}px` } } : {})}
-        />
-      ) : offline || ended ? null : (
-        // Before the tabs bar: docked, the keys sit under the terminal and over the bar (#2499).
-        <PhoneKeys
-          port={port}
-          open={keysOpen}
-          docked={docked}
-          inset={keyboard.inset}
-          host={host}
-          sticky={sticky}
-          terminals={terminals}
-          current={terminal.address}
-          onOpen={onOpen}
-          onMenu={(open) => {
-            hold(open);
-            setMenu(open);
-          }}
-          pad={pad}
-          onPad={setPad}
-          onBarHeight={setBarHeight}
-          onPacks={() => {
-            hold(true);
-            setPacks(true);
-          }}
-          browsing={browsing}
-          {...(mouseOnly ? { onKeys: setKeysShown } : { onBrowse: setBrowsing })}
-        />
-      )}
-      {tabsBar ? (
-        <PhoneTabSwitcher
-          terminals={terminals}
-          tabs={tabs}
-          active={terminal.address}
-          title={tabTitle ?? title}
-          onOpen={onOpen}
-          clearance={ROUND_BUTTON_CLEARANCE}
-          onCloseTab={onCloseTab}
-          onNewInSpace={onNewInSpace}
-          sheet={sheet}
-          onSheet={onSheet}
-        />
-      ) : null}
-      {offline || ended ? null : (
-        <PackSheet
-          open={packs}
-          onOpenChange={(open) => {
-            setPacks(open);
-            if (!open) requestAnimationFrame(() => port.current?.focus());
-          }}
-          settings={keyBar}
-        />
-      )}
+        {offline || ended ? null : (
+          <PackSheet
+            open={packs}
+            onOpenChange={(open) => {
+              setPacks(open);
+              if (!open) requestAnimationFrame(() => port.current?.focus());
+            }}
+            settings={keyBar}
+          />
+        )}
+      </div>
     </div>
   );
 }

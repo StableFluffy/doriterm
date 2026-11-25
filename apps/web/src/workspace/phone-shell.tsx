@@ -183,6 +183,7 @@ export function PhoneShell(props: PhoneShellProps) {
     // its panes instead, so moving the split focus between them keeps both terminals mounted.
     <PhoneTerminal
       key={panes.length > 1 && panes.includes(terminal.address) ? `split:${panes.join(" ")}` : terminal.address}
+      arrive={pushed}
       connection={connection}
       terminal={terminal}
       terminals={terminals}
