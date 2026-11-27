@@ -155,6 +155,7 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
       style={props.offset === 0 ? undefined : { translate: `${props.offset}px 0` }}
       className={cn(
         "group relative motion-arrive flex h-[29px] shrink-0 items-center gap-[7px] rounded-[7px] border pl-2.5 text-[0.8rem] select-none [--arrive-duration:var(--duration-micro)]",
+        !pinned && "min-w-[180px]",
         // A pinned tab has no close button, so it keeps one padding selected or not: selecting it never resizes it.
         active
           ? cn("border-border bg-raised text-foreground", pinned ? "pr-2.5" : "pr-1")
@@ -174,7 +175,10 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
         {...(pinned ? { title: tab.title, "data-pinned": "" } : {})}
         // The hit area spans the whole tab and half the 3 px gap to the next, past the wrapper's 1 px border:
         // no dead column beside its Close button or between two tabs. Close comes later, so it stays on top.
-        className="flex min-w-0 items-center gap-[7px] rounded-xs outline-none after:absolute after:inset-y-0 after:-inset-x-[2.5px] focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring"
+        className={cn(
+          "flex min-w-0 items-center gap-[7px] rounded-xs outline-none after:absolute after:inset-y-0 after:-inset-x-[2.5px] focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring",
+          !pinned && "flex-1",
+        )}
       >
         {pinned && tab.icon === undefined ? <Pin aria-hidden className="size-3.5 shrink-0" /> : tab.icon}
         {pinned ? <span className="sr-only">{tab.title}</span> : <TabLabel text={tab.title} />}
