@@ -1,9 +1,10 @@
 import { freshId } from "@doriface/protocol/layout";
 import { useCallback } from "react";
 import type { Zone } from "../layout/drop-zone.ts";
+import { tabKey as makeTabKey } from "../layout/view.ts";
 import { type LayoutTab, localOf } from "./layout-model.ts";
 import { machineOf } from "./model.ts";
-import { tabDropWrite, terminalDropWrite } from "./terminal-drop.ts";
+import { detachPaneWrite, tabDropWrite, terminalDropWrite } from "./terminal-drop.ts";
 import type { MachineLayout } from "./use-layout-docs.ts";
 
 /** Where a terminal dragged from the sidebar lands: pane `pane` of the tab keyed `tab`, in the zone the pointer is in. */
@@ -26,6 +27,8 @@ export interface TerminalDrops {
   readonly takesTab: (sourceTab: string, targetTab: string) => boolean;
   /** Docks `sourceTab` onto `target` (tabDropWrite) and focuses its pane; true once the write landed. */
   readonly dropTab: (sourceTab: string, target: TerminalDropTarget) => Promise<boolean>;
+  /** Pops `paneId` out of split tab `tabKey` into its own tab right after it without restarting its terminal. */
+  readonly detachPane: (tabKey: string, paneId: string) => Promise<boolean>;
 }
 
 export interface TerminalDropsContext {
@@ -111,5 +114,19 @@ export function useTerminalDrops({ tabs, layoutOf, show }: TerminalDropsContext)
     [show, writablePair],
   );
 
-  return { takesTerminal, dropTerminal, takesTab, dropTab };
+  const detachPane = useCallback(
+    async (key: string, paneId: string): Promise<boolean> => {
+      const tab = tabs.find((each) => each.key === key);
+      if (tab === undefined || tab.transient || tab.readOnly !== null || tab.panes.length < 2) return false;
+      const layout = layoutOf(tab.machine);
+      if (layout === undefined || layout.readOnly !== null) return false;
+      const newTabId = freshId("tb");
+      const written = await layout.edit((doc) => detachPaneWrite(doc, tab.id, paneId, newTabId)?.doc ?? null);
+      if (written) show(makeTabKey(layout.machineId, newTabId), paneId);
+      return written;
+    },
+    [layoutOf, show, tabs],
+  );
+
+  return { takesTerminal, dropTerminal, takesTab, dropTab, detachPane };
 }

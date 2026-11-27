@@ -108,6 +108,7 @@ function usePaneActions(props: SplitPanesProps): PaneActions {
       latest.current.layout.focusPane(tab, pane);
       latest.current.layout.toggleZoom();
     },
+    detach: (tab, pane) => void latest.current.layout.detachPane(tab, pane),
     close: (address) => latest.current.onClose(address),
     end: (address, end) => latest.current.onEnd(address, end),
     ended: (address, pid) => latest.current.onEnded(address, pid),
@@ -137,6 +138,7 @@ export function SplitPanes(props: SplitPanesProps) {
     (tab) => laidOut.current.get(tab),
     (_tab, pane, target) => void layout.move(pane, target.pane, target.zone),
     PANE_GAP,
+    (tab, pane) => void layout.detachPane(tab, pane),
   );
   // A terminal dragged from the sidebar, or a tab dragged from the top tab bar, drops on the tab in view.
   const fromList = useTerminalDrag();
@@ -243,11 +245,21 @@ export function SplitPanes(props: SplitPanesProps) {
                         });
                       }}
                       onResize={(delta) => void layout.resize(divider.container, divider.index, delta)}
+                      onEqualize={() => void layout.equalize()}
                     />
                   ))
                 : null}
               {drag?.tab === tab.key || (selected && fromList !== null) ? (
                 <div aria-hidden className="absolute inset-0 z-10 cursor-grabbing" />
+              ) : null}
+              {drag?.tab === tab.key && drag.detach ? (
+                <div
+                  aria-hidden
+                  data-pane-detach
+                  className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-10 items-center justify-center rounded-lg border-2 border-ring bg-ring/15 text-xs font-medium text-foreground shadow-sm"
+                >
+                  Release to move pane into a new tab
+                </div>
               ) : null}
               {dropping !== null && dropOn !== undefined ? (
                 <div

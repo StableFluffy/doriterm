@@ -1,7 +1,7 @@
 import type { JsonObject } from "@doriface/protocol";
 import { childrenOf, idOf, panesOf, tabsOf, typeOf, type Node } from "@doriface/protocol/layout";
 import { describe, expect, test } from "bun:test";
-import { tabDropWrite, terminalDropWrite } from "./terminal-drop.ts";
+import { detachPaneWrite, tabDropWrite, terminalDropWrite } from "./terminal-drop.ts";
 
 /** A layout document of one space whose tabs are rows of terminal panes (local addresses); pane ids are `p<terminal>`. */
 const docOf = (tabs: readonly (readonly string[])[]): JsonObject => ({
@@ -137,5 +137,22 @@ describe("a tab dragged from the tab strip onto a pane", () => {
     expect(tabDropWrite(doc, "tb-gone", { tab: "tb0", target: "pt1", zone: "right" }, "s-split")).toBeNull();
     expect(tabDropWrite(doc, "tb1", { tab: "tb0", target: "pgone", zone: "right" }, "s-split")).toBeNull();
     expect(tabDropWrite(null, "tb1", { tab: "tb0", target: "pt1", zone: "right" }, "s-split")).toBeNull();
+  });
+});
+
+describe("detaching a pane from a split tab into its own tab", () => {
+  test("removes the pane from its split tab and inserts a new tab right after it keeping the pane id", () => {
+    const doc = docOf([["t1", "t2"], ["t3"]]);
+    const detached = detachPaneWrite(doc, "tb0", "pt2", "tb-pop");
+    expect(tabs(detached?.doc)).toEqual(["tb0:row(t1)", "tb-pop:t2", "tb1:row(t3)"]);
+    expect(detached?.tab).toBe("tb-pop");
+    expect(detached?.pane).toBe("pt2");
+  });
+
+  test("rejects a single-pane tab or missing pane", () => {
+    const doc = docOf([["t1"], ["t2", "t3"]]);
+    expect(detachPaneWrite(doc, "tb0", "pt1", "tb-pop")).toBeNull();
+    expect(detachPaneWrite(doc, "tb1", "pgone", "tb-pop")).toBeNull();
+    expect(detachPaneWrite(null, "tb1", "pt2", "tb-pop")).toBeNull();
   });
 });

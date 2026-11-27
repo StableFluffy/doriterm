@@ -1,5 +1,6 @@
 import type { JsonObject } from "@doriface/protocol";
 import {
+  addTab,
   editTab,
   isContainer,
   movePane,
@@ -178,4 +179,33 @@ export function tabDropWrite(
       ? null
       : editTab(without, targetTab, (root) => placeSubtreeBeside(root, target, zone, movingSubtree, containerId));
   return placed === null ? null : { doc: placed, pane: lead.id };
+}
+
+/** What to save when popping a pane out of a split tab into a fresh tab beside it. */
+export interface DetachPaneWrite {
+  readonly doc: JsonObject;
+  readonly tab: string;
+  readonly pane: string;
+}
+
+/**
+ * Extracts `pane` from split tab `tab` and places it into a new tab right after `tab` in the same space.
+ * The pane keeps its exact id so its live terminal/agent never restarts. Null when `tab` has only one pane.
+ */
+export function detachPaneWrite(
+  doc: JsonObject | null,
+  tab: string,
+  pane: string,
+  newTabId: string,
+): DetachPaneWrite | null {
+  if (doc === null) return null;
+  const source = tabsOf(doc).find((each) => each.id === tab);
+  if (source === undefined || panesOf(source.root).length < 2) return null;
+  const moving = paneNode(source.root, pane);
+  if (moving === null) return null;
+  const without = editTab(doc, tab, (root) => removePane(root, pane));
+  if (without === null) return null;
+  const freshTab: JsonObject = { id: newTabId, name: "", root: withoutField(moving, "size") };
+  const next = addTab(without, { id: source.space, folder: "" }, freshTab, tab);
+  return { doc: next, tab: newTabId, pane };
 }
