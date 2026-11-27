@@ -142,8 +142,8 @@ export function Pane(props: PaneProps) {
       data-split={split}
       data-focused={focused}
       className={cn(
-        "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card transition-colors duration-(--duration-color) [&_.wterm]:transition-opacity [&_.wterm]:duration-(--duration-color)",
-        split && focused ? "border-ring/60" : "border-border",
+        "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card transition-colors duration-(--duration-color) [&_.wterm]:transition-opacity [&_.wterm]:duration-(--duration-color)",
+        split && (focused ? "border border-ring/60" : "border border-border"),
       )}
     >
       {split ? (
