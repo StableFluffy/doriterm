@@ -84,7 +84,11 @@ export function SidebarFilterField() {
             sidebarFilter.close();
             terminalInput()?.focus();
           }}
-          className={query !== "" ? "h-8 pr-7 pl-8 text-sm" : "h-8 pl-8 text-sm"}
+          className={
+            query !== ""
+              ? "h-8 border-border bg-raised/50 pr-7 pl-8 text-sm focus-visible:bg-surface"
+              : "h-8 border-border bg-raised/50 pl-8 text-sm focus-visible:bg-surface"
+          }
         />
         {query === "" ? null : (
           <IconButton
