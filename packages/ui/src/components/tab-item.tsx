@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, ArrowRightToLine, CopyX, Pencil, Pin, PinOff, Plus, X } from "lucide-react";
-import { memo, type PointerEvent, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { memo, type PointerEvent, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "../lib/cn.ts";
 import { IconButton } from "./icon-button.tsx";
 import { ContextMenu, MenuItem, MenuSeparator, skipMenuHandler } from "./menu.tsx";
@@ -116,6 +116,7 @@ function TabNameEdit({
 }) {
   const [value, setValue] = useState(stored !== "" ? stored : initial);
   const done = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const finish = (save: boolean): void => {
     if (done.current) return;
     done.current = true;
@@ -135,8 +136,23 @@ function TabNameEdit({
     }
     onCommit(trimmed);
   };
+  const finishLatest = useRef(finish);
+  finishLatest.current = finish;
+
+  // Clicking the terminal canvas or chrome outside the input may not trigger blur; commit on outside pointerdown too.
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent | globalThis.PointerEvent): void => {
+      if (inputRef.current !== null && event.target instanceof Node && !inputRef.current.contains(event.target)) {
+        finishLatest.current(true);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown, true);
+    return () => window.removeEventListener("pointerdown", onPointerDown, true);
+  }, []);
+
   return (
     <input
+      ref={inputRef}
       type="text"
       autoFocus
       data-tab-edit

@@ -1,6 +1,6 @@
 import { cn, SpaceAvatar, StatusIndicator, type Space } from "@doriface/ui";
 import { Folder } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useSpaceRenaming } from "./space-rename-context.ts";
 
 export interface SpaceNameInputProps {
@@ -19,6 +19,7 @@ export function SpaceNameInput({ space, onClose }: SpaceNameInputProps) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const cancelled = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const errorId = useId();
   const inputId = useId();
 
@@ -46,6 +47,19 @@ export function SpaceNameInput({ space, onClose }: SpaceNameInputProps) {
       setError(cause instanceof Error ? cause.message : String(cause));
     });
   };
+  const commitLatest = useRef(commit);
+  commitLatest.current = commit;
+
+  // Clicking the terminal canvas or non-focusable chrome may not fire blur while data-holds-keyboard is active.
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent): void => {
+      if (inputRef.current !== null && event.target instanceof Node && !inputRef.current.contains(event.target)) {
+        commitLatest.current(true);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown, true);
+    return () => window.removeEventListener("pointerdown", onPointerDown, true);
+  }, []);
 
   const mark =
     space.color === undefined ? (
@@ -63,6 +77,7 @@ export function SpaceNameInput({ space, onClose }: SpaceNameInputProps) {
           Rename space {space.name}
         </label>
         <input
+          ref={inputRef}
           id={inputId}
           type="text"
           autoFocus
