@@ -1,5 +1,5 @@
 import { Button, IconButton, Input, ScrollArea, Tab, TabList, Tabs, cn, fieldLabelClass } from "@doriface/ui";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import {
   useCallback,
   useId,
@@ -177,7 +177,7 @@ export function SettingsRoute() {
     <IconButton
       label="Close settings"
       keys={triggerKeys("escape", currentPlatform())}
-      icon={<ArrowLeft />}
+      icon={dialog ? <X /> : <ArrowLeft />}
       onClick={close}
     />
   );
@@ -226,10 +226,20 @@ export function SettingsRoute() {
           className={cn(
             "mb-1 flex h-11 shrink-0 items-center gap-1",
             !dialog && "pl-[calc(var(--titlebar-inset-start,0.5rem)-0.5rem)]",
+            dialog && "justify-between pl-2",
           )}
         >
-          {back}
-          <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+          {dialog ? (
+            <>
+              <h1 className="text-base font-semibold text-foreground">Settings</h1>
+              {back}
+            </>
+          ) : (
+            <>
+              {back}
+              <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+            </>
+          )}
         </div>
         <div className="shrink-0">
           <SearchSettings query={query} onQuery={onQuery} onKeyDown={onSearchKey} inputRef={field} />

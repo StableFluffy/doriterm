@@ -1,6 +1,6 @@
 import type { Terminal } from "@doriface/protocol";
 import { agentRowLead, IconButton, Menu, MenuRadioGroup, MenuRadioItem, SidebarSection } from "@doriface/ui";
-import { Clock, Layers } from "lucide-react";
+import { ArrowUpDown, Clock, Layers } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { AgentItem } from "./agent-item.tsx";
 import { publishAgentOrder } from "./agent-order.ts";
@@ -28,11 +28,12 @@ export interface AgentsGroupProps {
 
 function SortMenu({ size }: { readonly size?: "md" }) {
   const [sort, setSort] = useAgentSort();
+  const triggerIcon = sort === "space" ? <Layers /> : <ArrowUpDown />;
   const trigger =
     size === undefined ? (
-      <IconButton label="Sort agents" icon={<Clock />} className="-mr-1" />
+      <IconButton label="Sort agents" icon={triggerIcon} className="-mr-1" />
     ) : (
-      <IconButton label="Sort agents" icon={<Clock />} size={size} />
+      <IconButton label="Sort agents" icon={triggerIcon} size={size} />
     );
   return (
     <Menu align="end" trigger={trigger}>

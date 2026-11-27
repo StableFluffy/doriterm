@@ -1,7 +1,30 @@
 import type { Terminal } from "@doriface/protocol";
-import { CommandPalette } from "@doriface/ui";
+import { CommandPalette, type Command } from "@doriface/ui";
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef } from "react";
+import {
+  Bell,
+  Cloud,
+  Columns2,
+  FolderPlus,
+  HelpCircle,
+  Keyboard,
+  ListFilter,
+  Mic,
+  Palette as PaletteIcon,
+  PanelLeft,
+  Plug,
+  Plus,
+  Rows2,
+  Search,
+  Server,
+  Settings,
+  Sparkles,
+  Terminal as TerminalIcon,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import { useMemo, useRef, type ReactNode } from "react";
 import { resolveKeymap } from "../keys/keymap.ts";
 import { useOverrides } from "../keys/keymap-store.ts";
 import { runAction } from "../keys/dispatcher.ts";
@@ -12,6 +35,54 @@ import type { ListedSpace } from "./model.ts";
 import { useShown } from "./use-shown.ts";
 import type { ShellAction } from "./shell-actions.ts";
 import { useOverlayFocus } from "./use-overlay-focus.ts";
+
+const SETTINGS_JUMPS: readonly Command[] = [
+  { id: "settings:skills", label: "Settings: Agent Skills", group: "General", icon: <Sparkles aria-hidden /> },
+  { id: "settings:appearance", label: "Settings: Appearance", group: "General", icon: <PaletteIcon aria-hidden /> },
+  { id: "settings:boat", label: "Settings: Boat.dev", group: "General", icon: <Cloud aria-hidden /> },
+  { id: "settings:terminal", label: "Settings: Terminal", group: "General", icon: <TerminalIcon aria-hidden /> },
+  { id: "settings:keybindings", label: "Settings: Keybindings", group: "General", icon: <Keyboard aria-hidden /> },
+  { id: "settings:machines", label: "Settings: Machines & Mesh", group: "General", icon: <Server aria-hidden /> },
+  { id: "settings:mcp", label: "Settings: MCP", group: "General", icon: <Plug aria-hidden /> },
+  { id: "settings:notifications", label: "Settings: Notifications", group: "General", icon: <Bell aria-hidden /> },
+];
+
+function commandIcon(command: Command): ReactNode | undefined {
+  if (command.icon !== undefined) return command.icon;
+  if (command.id.startsWith("agent:")) return <TerminalIcon aria-hidden />;
+  if (command.id.startsWith("host:")) return <Server aria-hidden />;
+  switch (command.id) {
+    case "tab.new":
+      return <Plus aria-hidden />;
+    case "tab.close":
+    case "pane.close":
+      return <X aria-hidden />;
+    case "pane.split:right":
+      return <Columns2 aria-hidden />;
+    case "pane.split:down":
+      return <Rows2 aria-hidden />;
+    case "layout.toggle:sidebar":
+      return <PanelLeft aria-hidden />;
+    case "layout.filter:sidebar":
+      return <ListFilter aria-hidden />;
+    case "space.new":
+      return <FolderPlus aria-hidden />;
+    case "terminal.find":
+      return <Search aria-hidden />;
+    case "terminal.dictate":
+      return <Mic aria-hidden />;
+    case "app.zoom_in":
+      return <ZoomIn aria-hidden />;
+    case "app.zoom_out":
+      return <ZoomOut aria-hidden />;
+    case "app.settings":
+      return <Settings aria-hidden />;
+    case "app.help":
+      return <HelpCircle aria-hidden />;
+    default:
+      return undefined;
+  }
+}
 
 export interface PaletteProps {
   readonly terminals: readonly Terminal[];
@@ -32,7 +103,7 @@ export function Palette({ terminals: listed, host, route, actions, spaces, onOpe
   const overrides = useOverrides();
   const commands = useMemo(() => {
     const platform = currentPlatform();
-    return paletteCommands({
+    const base = paletteCommands({
       terminals,
       host,
       route,
@@ -40,7 +111,11 @@ export function Palette({ terminals: listed, host, route, actions, spaces, onOpe
       platform,
       keymap: resolveKeymap(platform, overrides),
       spaceOf: spaceNameOf(spaces),
+    }).map((command) => {
+      const icon = commandIcon(command);
+      return icon === undefined ? command : Object.assign({}, command, { icon });
     });
+    return [...base, ...SETTINGS_JUMPS];
   }, [terminals, host, route, actions, spaces, overrides]);
   const frame = useRef<HTMLDivElement>(null);
   useOverlayFocus(frame, '[role="combobox"]');
@@ -50,7 +125,7 @@ export function Palette({ terminals: listed, host, route, actions, spaces, onOpe
     if (choice.kind === "action") return void (runAction(choice.id) && onClose());
     onClose();
     if (choice.kind === "agent") onOpenTerminal(choice.address);
-    else void navigate({ to: "/settings" });
+    else void navigate({ to: "/settings", ...(choice.hash === undefined ? {} : { hash: choice.hash }) });
   };
   return active ? (
     <>

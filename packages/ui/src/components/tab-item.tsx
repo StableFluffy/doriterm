@@ -81,7 +81,7 @@ export interface TabItemProps {
 }
 
 /**
- * A tab's title, cut at 170 px with an ellipsis; only a title cut short carries a tooltip with the whole of it (an agent's
+ * A tab's title, cut at 220 px with an ellipsis; only a title cut short carries a tooltip with the whole of it (an agent's
  * long name, #1541), so a title that fits has none (#478).
  */
 function TabLabel({ text }: { readonly text: string }) {
@@ -99,7 +99,7 @@ function TabLabel({ text }: { readonly text: string }) {
   }, [text]);
   return (
     // Positioned above the tab button's hit layer (its ::after), so a pointer over the label reaches this title (#1530).
-    <span ref={label} title={clipped ? text : undefined} className="relative z-[1] max-w-[170px] truncate">
+    <span ref={label} title={clipped ? text : undefined} className="relative z-[1] max-w-[220px] truncate">
       {text}
     </span>
   );
@@ -255,10 +255,11 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
       className={cn(
         "group relative motion-arrive flex h-[29px] shrink-0 items-center gap-[7px] rounded-[7px] border pl-2.5 text-[0.8rem] select-none [--arrive-duration:var(--duration-micro)]",
         !pinned && "min-w-[180px]",
-        // A pinned tab has no close button, so it keeps one padding selected or not: selecting it never resizes it.
+        // A pinned tab has no close button; unpinned tabs always reserve the close slot so switching never shifts width.
+        pinned ? "pr-2.5" : "pr-1",
         active
-          ? cn("border-border bg-raised text-foreground", pinned ? "pr-2.5" : "pr-1")
-          : "border-transparent pr-2.5 text-muted-foreground hover:bg-hover",
+          ? "border-border bg-raised text-foreground"
+          : "border-transparent text-muted-foreground hover:bg-hover hover:text-foreground/90",
         props.lifted && "border-border bg-raised shadow-overlay hover:bg-raised",
         props.detached && "border-dashed border-border opacity-45",
         props.placeClass,
@@ -299,19 +300,21 @@ export const TabItem = memo(function TabItem(props: TabItemProps) {
           )}
         </button>
       )}
-      {active && !pinned ? (
+      {!pinned && (active || offers.close) ? (
         <IconButton
           label={`Close ${tab.title}`}
           icon={<X />}
           data-tab-close
           loading={tab.closing === true}
           onClick={(event) => {
-            // Selecting a tab moves the strip (only the selected tab has this button), so the second click of a
-            // double-click on the tab can land here: that is a rename of the tab, never its close.
             if (event.detail > 1) actions.rename(tab.id);
             else actions.close(tab.id);
           }}
-          className="size-5 [&_svg:not([data-slot=spinner])]:size-3"
+          className={cn(
+            "relative z-[1] size-5 [&_svg:not([data-slot=spinner])]:size-3",
+            !active &&
+              "opacity-0 transition-opacity duration-(--duration-micro) group-hover:opacity-100 focus-visible:opacity-100 coarse:pointer-events-none coarse:opacity-0",
+          )}
         />
       ) : null}
     </div>
