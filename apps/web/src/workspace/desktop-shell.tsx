@@ -163,6 +163,32 @@ export function DesktopShell(props: DesktopShellProps) {
     tabEntry(tab, position, byAddress, props.closeWaiting ?? null),
   );
   const tabRename = useTabRename(layout, tabList);
+  const [editingTab, setEditingTab] = useState<string | null>(null);
+  const editingTabEntry = editingTab === null ? undefined : layout.tabs.find((tab) => tab.key === editingTab);
+  const startTabRename = useCallback(
+    (key: string): void => {
+      const target = layout.tabs.find((tab) => tab.key === key);
+      if (target !== undefined && !target.pinned && !target.transient && target.readOnly === null) {
+        queueMicrotask(() => setEditingTab(key));
+      } else {
+        tabRename.open(key);
+      }
+    },
+    [layout.tabs, tabRename],
+  );
+  const commitTabRename = useCallback(
+    (key: string, name: string): void => {
+      setEditingTab(null);
+      void layout.renameTab(key, name).catch((cause: unknown) =>
+        toasts.add({
+          type: "error",
+          title: "The tab was not renamed",
+          description: cause instanceof Error ? cause.message : String(cause),
+        }),
+      );
+    },
+    [layout, toasts],
+  );
   useAppActions({
     terminals,
     layout,
@@ -173,7 +199,7 @@ export function DesktopShell(props: DesktopShellProps) {
     onSplit,
     onCloseTab,
     onClosePane,
-    onRenameTab: tabRename.open,
+    onRenameTab: startTabRename,
     onToggleSidebar: toggleSidebar,
     onFocusSidebar: focusSidebar,
     onFilterSidebar: filterSidebar,
@@ -382,7 +408,11 @@ export function DesktopShell(props: DesktopShellProps) {
                 onSpace={onNewSpace}
               />
             }
-            onRename={tabRename.open}
+            onRename={startTabRename}
+            editingId={editingTab}
+            {...(editingTabEntry === undefined ? {} : { editingValue: editingTabEntry.name })}
+            onRenameCommit={commitTabRename}
+            onRenameCancel={() => setEditingTab(null)}
             onMove={layout.moveTab}
             moveKeys={{
               ...(moveLeftKeys === undefined ? {} : { left: moveLeftKeys }),
@@ -412,7 +442,7 @@ export function DesktopShell(props: DesktopShellProps) {
           {/* The page's one main landmark: the panes, between the tab strip and the status bar (#1378). */}
           <main className="flex min-h-0 min-w-0 flex-1 flex-col">
             {layout.tabs.length > 0 ? null : nothingOpen ? (
-              <NoTerminal onNew={onNew} />
+              <NoTerminal onNew={onNew} onNewBoat={onNewBoat} />
             ) : (
               <QuietBusy label="Restoring your tabs" text="Restoring your tabs…" className="flex-1" />
             )}
