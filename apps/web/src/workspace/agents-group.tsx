@@ -178,6 +178,7 @@ export function AgentsGroup({
       })}
     </div>
   );
+  const totalAgents = useMemo(() => groups.reduce((sum, group) => sum + group.count, 0), [groups]);
   if (!heading)
     return (
       <section aria-label="Agents" className="flex flex-col gap-px">
@@ -185,8 +186,19 @@ export function AgentsGroup({
       </section>
     );
   return (
-    <SidebarSection title="Agents" {...(rail ? { className: "[&>header]:sr-only" } : { action: sortMenu })}>
-      {list}
+    <SidebarSection
+      variant="region"
+      title="Agents"
+      {...(totalAgents > 0 ? { count: totalAgents } : {})}
+      {...(rail ? { className: "[&>header]:sr-only" } : totalAgents > 0 ? { action: sortMenu } : {})}
+    >
+      {groups.length === 0 ? (
+        rail ? null : (
+          <p className="px-2 py-1 text-xs text-muted-foreground/70">No active agents</p>
+        )
+      ) : (
+        list
+      )}
     </SidebarSection>
   );
 }
