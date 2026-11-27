@@ -33,7 +33,7 @@ export function BoatSection() {
           description={
             activeSize === undefined
               ? "Machine type passed to boat new --type."
-              : `${activeSize.label}: ${activeSize.specs}. Small (2 vCPU, 4 GB), Default (4 vCPU, 8 GB), Large (8 vCPU, 16 GB), XLarge (16 vCPU, 32 GB).`
+              : `${activeSize.label} — ${activeSize.specs}`
           }
           control={
             <SegmentedControl<BoatVmSize>
@@ -206,8 +206,8 @@ export function BoatSection() {
       </Subgroup>
 
       <Subgroup title="Command preview">
-        <div className="flex flex-col gap-3 pt-1">
-          <pre className="overflow-x-auto rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground">
+        <div className="flex flex-col gap-3 py-3">
+          <pre className="overflow-x-auto rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-xs text-foreground">
             {preview}
           </pre>
           <div>

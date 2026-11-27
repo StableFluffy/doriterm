@@ -6,14 +6,17 @@ import { expect, test } from "./fixtures.ts";
 test.use({ serviceWorkers: "block" });
 
 const SECTIONS = [
-  "This device",
-  "Machines",
-  "Terminal",
-  "Keyboard",
-  "Notifications",
   "Appearance",
+  "Terminal",
   "Keybindings",
+  "Notifications",
+  "Agent Skills",
+  "MCP",
+  "Boat.dev",
   "Voice input",
+  "Machines & Mesh",
+  "This device",
+  "Phone key bar",
 ] as const;
 
 const ROW_FLOOR = 48;
@@ -22,11 +25,9 @@ const ROW_FLOOR = 48;
 const ROW_PADDING_CEILING = 14;
 
 /**
- * The other spacing Settings used before #2878, which the scale may not grow past either: 4 px under a section title
- * (`pb-1`) and 20 px between a section's blocks (`gap-5`, the widest of Terminal's and Keybindings'). With rows padded
- * no more than before, a phone shows at least as many rows as it did, whatever the font wraps (#2882 review).
+ * Spacing ceilings for section titles (`pb-2` = 8 px) and block stacks (`gap-5` = 20 px).
  */
-const TITLE_GAP_CEILING = 4;
+const TITLE_GAP_CEILING = 8;
 const BLOCK_GAP_CEILING = 20;
 
 interface Scale {

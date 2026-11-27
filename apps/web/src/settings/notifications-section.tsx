@@ -8,7 +8,7 @@ import { pushSettings, type PushView } from "../push/push-settings.ts";
 import { idOfMachine } from "../workspace/model.ts";
 import { useMachines } from "../workspace/use-machines.ts";
 import { noticeControls } from "./notice-controls.ts";
-import { Subgroup, sectionStackClass } from "./settings-layout.tsx";
+import { SettingsCard, Subgroup, sectionStackClass } from "./settings-layout.tsx";
 
 const NO_TERMINALS: readonly Terminal[] = [];
 
@@ -148,7 +148,7 @@ export function NotificationsSection() {
     void settings.setPrefs({ ...view.prefs, events: { ...view.prefs.events, [event]: on } });
   return (
     <div className={sectionStackClass} data-push-state={blocked ? "blocked" : view.on ? "on" : "off"}>
-      <div className="flex flex-col">
+      <SettingsCard>
         <SettingRow
           title="Notifications on this device"
           description={statusText(view)}
@@ -193,9 +193,7 @@ export function NotificationsSection() {
           description={
             view.tested
               ? "Sent. It should appear in a moment."
-              : desktop
-                ? "Runs the checks an agent's notification passes, whichever machine it runs on, then shows one."
-                : "Checks that this device gets them."
+              : "Send a sample alert to verify delivery on this device."
           }
           control={
             <Button disabled={off} loading={controls.running === "test"} onClick={() => void settings.test()}>
@@ -203,7 +201,7 @@ export function NotificationsSection() {
             </Button>
           }
         />
-      </div>
+      </SettingsCard>
       {view.error === null ? null : (
         <Notice tone="error" title="Notifications">
           {view.error}
