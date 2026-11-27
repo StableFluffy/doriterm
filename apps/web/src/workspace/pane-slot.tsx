@@ -78,7 +78,7 @@ function PaneSlot(props: PaneSlotProps) {
       data-focused={focused}
       tabIndex={-1}
       onFocus={onFocus}
-      className="flex min-h-0 min-w-0 flex-1 items-center justify-center rounded-lg border border-border bg-card p-4 text-center text-sm text-muted-foreground"
+      className="flex min-h-0 min-w-0 flex-1 items-center justify-center bg-card p-4 text-center text-sm text-muted-foreground"
     >
       {text}
     </section>

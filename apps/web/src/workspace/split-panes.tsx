@@ -17,8 +17,10 @@ import { targetIn, usePaneDrag } from "./use-pane-drag.ts";
 import { useTerminalDrag, useTerminalDropSurface } from "./terminal-drag.tsx";
 import type { Layout, PaneTarget } from "./use-layout.ts";
 
-/** Space between panes, px: the gap shows the canvas, so panes read as separate cards. */
-export const PANE_GAP = 8;
+/** Hairline gap between split panes, px: keeps terminals flush edge-to-edge without bulky card margins. */
+export const PANE_GAP = 1;
+/** Outer snap tolerance in px when dragging tabs or panes to the edges of the terminal canvas. */
+const DROP_EDGE_PAD = 8;
 
 export const panelId = (tab: string): string => `tab-panel-${tab}`;
 
@@ -137,7 +139,7 @@ export function SplitPanes(props: SplitPanesProps) {
     ref,
     (tab) => laidOut.current.get(tab),
     (_tab, pane, target) => void layout.move(pane, target.pane, target.zone),
-    PANE_GAP,
+    DROP_EDGE_PAD,
     (tab, pane) => void layout.detachPane(tab, pane),
   );
   // A terminal dragged from the sidebar, or a tab dragged from the top tab bar, drops on the tab in view.
@@ -147,7 +149,7 @@ export function SplitPanes(props: SplitPanesProps) {
       const tab = layout.active;
       if (tab === null || layout.zoomed !== null || !layout.takesTerminal(address, tab.key)) return null;
       const own = tab.panes.find((pane) => pane.address === address)?.id ?? "";
-      const target = targetIn(ref.current, laidOut.current.get(tab.key), own, x, y, PANE_GAP);
+      const target = targetIn(ref.current, laidOut.current.get(tab.key), own, x, y, DROP_EDGE_PAD);
       return target === null ? null : { tab: tab.key, ...target };
     },
     drop: (address, target) => void layout.dropTerminal(address, target),
@@ -158,7 +160,7 @@ export function SplitPanes(props: SplitPanesProps) {
     tabTargetAt: (sourceTab, x, y) => {
       const tab = layout.active;
       if (tab === null || layout.zoomed !== null || !layout.takesTab(sourceTab, tab.key)) return null;
-      const target = targetIn(ref.current, laidOut.current.get(tab.key), "", x, y, PANE_GAP);
+      const target = targetIn(ref.current, laidOut.current.get(tab.key), "", x, y, DROP_EDGE_PAD);
       return target === null ? null : { tab: tab.key, ...target };
     },
     dropTab: (sourceTab, target) => void layout.dropTab(sourceTab, target),
@@ -167,7 +169,7 @@ export function SplitPanes(props: SplitPanesProps) {
   // dropped drag stays on screen until its write lands, and that render changes the frame, so it moves no pane either.
   const frame = `${box.width}x${box.height}${preview === null ? "" : `:${preview.delta}`}`;
   return (
-    <div className="min-h-0 flex-1 p-2">
+    <div className="min-h-0 flex-1">
       <div ref={ref} className="relative h-full w-full">
         {layout.tabs.map((tab) => {
           const selected = tab.key === layout.active?.key;
@@ -256,7 +258,7 @@ export function SplitPanes(props: SplitPanesProps) {
                 <div
                   aria-hidden
                   data-pane-detach
-                  className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-10 items-center justify-center rounded-lg border-2 border-ring bg-ring/15 text-xs font-medium text-foreground shadow-sm"
+                  className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-10 items-center justify-center rounded-sm border-2 border-ring bg-ring/15 text-xs font-medium text-foreground shadow-sm"
                 >
                   Release to move pane into a new tab
                 </div>
@@ -265,7 +267,7 @@ export function SplitPanes(props: SplitPanesProps) {
                 <div
                   aria-hidden
                   data-pane-drop={dropping.zone}
-                  className="pointer-events-none absolute z-20 rounded-lg border-2 border-ring bg-ring/15"
+                  className="pointer-events-none absolute z-20 rounded-sm border-2 border-ring bg-ring/15"
                   style={(({ x, y, width, height }) => ({ left: x, top: y, width, height }))(
                     dropPreview(dropOn, dropping.zone),
                   )}
