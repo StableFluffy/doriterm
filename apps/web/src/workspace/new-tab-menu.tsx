@@ -1,25 +1,28 @@
 import type { HcConnection } from "@doriface/client";
 import type { TemplateInfo } from "@doriface/protocol";
 import { MenuCaption, MenuItem, MenuSeparator } from "@doriface/ui";
-import { Bot, Plus, SquareTerminal } from "lucide-react";
+import { Bot, Cloud, Plus, SquareTerminal } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useBoatConfig } from "../boat/store.ts";
 
 // After the menu's own click handling, which focuses the item it closes on: what the choice starts (type-ahead's
 // input for a new terminal) then keeps the keyboard from the first key typed. Still before the next key event.
 const after = (action: () => void) => () => queueMicrotask(action);
 
 /**
- * herdr-app's new menu behind the tab strip's + (#466 item 7): a terminal, the agents hc can start (its templates, read
- * each time the menu opens), and a new space. Ctrl+Shift+T stays a direct new tab.
+ * herdr-app's new menu behind the tab strip's + (#466 item 7): a terminal, a boat.dev remote terminal, the agents hc
+ * can start (its templates, read each time the menu opens), and a new space. Ctrl+Shift+T stays a direct new tab.
  */
 export function NewTabMenu(props: {
   readonly connection: HcConnection;
   readonly newTabKeys: readonly string[] | undefined;
   readonly onNew: () => void;
+  readonly onBoat: () => void;
   readonly onAgent: (template: string) => void;
   readonly onSpace: () => void;
 }) {
-  const { connection, newTabKeys, onNew, onAgent, onSpace } = props;
+  const { connection, newTabKeys, onNew, onBoat, onAgent, onSpace } = props;
+  const boat = useBoatConfig();
   const [agents, setAgents] = useState<readonly TemplateInfo[] | "failed" | null>(null);
   useEffect(() => {
     let live = true;
@@ -39,6 +42,9 @@ export function NewTabMenu(props: {
         onClick={after(onNew)}
       >
         Terminal
+      </MenuItem>
+      <MenuItem icon={<Cloud />} onClick={after(onBoat)}>
+        {boat.size === "default" ? "Remote terminal (boat.dev)" : `Remote terminal (boat.dev · ${boat.size})`}
       </MenuItem>
       <MenuCaption>Start an agent</MenuCaption>
       {agents === null || agents === "failed" || agents.length === 0 ? (

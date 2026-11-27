@@ -2,6 +2,8 @@ import type { TerminalRunParams } from "@doriface/protocol";
 import type { HcConnection } from "@doriface/client";
 import { useToastManager } from "@doriface/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { boatCommandLine, boatTabTitle } from "../boat/config.ts";
+import { boatConfigStore } from "../boat/store.ts";
 import { connectionStore } from "../connection/store.ts";
 import { useActionHandler } from "../keys/dispatcher.ts";
 import { ShortcutsHelp } from "../keys/shortcuts-dialog.tsx";
@@ -33,7 +35,7 @@ import { machineIds } from "./tab-keys.ts";
 import { findTerminal } from "./layout-model.ts";
 import { useLayout, withoutClaim, type PaneTarget } from "./use-layout.ts";
 import { chainedSplit, SplitChain } from "./split-chain.ts";
-import { afterEnd } from "./session-actions.ts";
+import { afterEnd, TITLE_LABEL } from "./session-actions.ts";
 import { afterGrace, useDeadPanes } from "./use-dead-panes.ts";
 import { useDropOnce } from "./use-drop-once.ts";
 import { useLayoutDocs } from "./use-layout-docs.ts";
@@ -231,6 +233,25 @@ function WorkspaceScreen({ connection }: WorkspaceProps) {
   // rather than asking the core and reporting the refusal (#2466 review).
   const newTab = (): void => {
     if (!newDisabled) newTerminal();
+  };
+  const newBoatTerminal = (): void => {
+    if (newDisabled) return;
+    const config = boatConfigStore.value;
+    const base = runParamsFor(
+      terminals.find((terminal) => terminal.address === inView),
+      startSpace(layout.active?.spaceKey),
+    );
+    runs.start(
+      {
+        ...base,
+        line: boatCommandLine(config),
+        labels: { ...base.labels, [TITLE_LABEL]: boatTabTitle(config) },
+      },
+      (address) => {
+        guideStore.opened(address, ids);
+        return opened(address);
+      },
+    );
   };
   // The latest `opened`, into a named space: a tab started from a space screen goes after that space's selected tab once
   // it is the selected one (addTab's `near`), and into that space even when it has no tab to select.
@@ -498,6 +519,7 @@ function WorkspaceScreen({ connection }: WorkspaceProps) {
                         onSelectSpace={selectSpace}
                         onNew={newTab}
                         newDisabled={newDisabled}
+                        onNewBoat={newBoatTerminal}
                         onNewAgent={(template) => newTerminal(template)}
                         onNewSpace={() => runs.start({}, inNewSpace)}
                         onSplit={split}

@@ -60,6 +60,8 @@ export interface DesktopShellProps {
   readonly onNew: () => void;
   /** New tab cannot start a terminal now (its machine is unreachable or its layout takes no edits). */
   readonly newDisabled: boolean;
+  /** Opens a remote terminal connected to a new boat.dev sandbox as a new tab. */
+  readonly onNewBoat: () => void;
   /** Starts an hc template (an agent) as a new tab, from the New tab menu. */
   readonly onNewAgent: (template: string) => void;
   readonly onNewSpace: () => void;
@@ -87,6 +89,7 @@ export function DesktopShell(props: DesktopShellProps) {
     spaceKeys,
     onSelectSpace,
     onNew,
+    onNewBoat,
     onNewAgent,
     onNewSpace,
     onSplit,
@@ -378,6 +381,7 @@ export function DesktopShell(props: DesktopShellProps) {
                 connection={connection}
                 newTabKeys={newTabKeys}
                 onNew={onNew}
+                onBoat={onNewBoat}
                 onAgent={onNewAgent}
                 onSpace={onNewSpace}
               />
