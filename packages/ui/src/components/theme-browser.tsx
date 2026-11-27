@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import { useDeferredValue, useId, useState } from "react";
 import { cn } from "../lib/cn.ts";
-import { fieldLabelClass, Input } from "./input.tsx";
+import { Input } from "./input.tsx";
 import { SegmentedControl } from "./segmented-control.tsx";
 import { ThemePicker, type ThemeOption } from "./theme-picker.tsx";
 
@@ -42,9 +42,9 @@ export function ThemeBrowser({ options, dark, light, defaultKind, onPick, classN
     options.find((option) => option.id === (wanted === "dark" ? dark : light))?.name ?? "None";
   return (
     <div className={cn("flex flex-col gap-3 py-3", className)}>
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex min-w-[min(14rem,100%)] flex-1 flex-col gap-1">
-          <label htmlFor={searchId} className={cn("px-0.5", fieldLabelClass)}>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-[min(14rem,100%)] flex-1">
+          <label htmlFor={searchId} className="sr-only">
             Search themes
           </label>
           <div className="relative">
@@ -55,7 +55,7 @@ export function ThemeBrowser({ options, dark, light, defaultKind, onPick, classN
             <Input
               id={searchId}
               type="search"
-              placeholder="Name or source, e.g. nord"
+              placeholder="Search themes, e.g. nord"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="pl-8"

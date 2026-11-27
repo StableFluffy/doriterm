@@ -34,13 +34,14 @@ const ROWS: readonly SettingHit[] = [
   row("device", "Getting started", "The first-run guide", ["guide", "tour"]),
   row("device", "Relay", "The relay this app connects through", ["relay", "self-hosted"]),
   row("device", "Connect through", "Relay or loopback", ["loopback", "route"]),
-  row("device", "MCP", "Connect local MCP clients to Doriterm", ["mcp", "model context protocol", "integrations"]),
-  row("machines", "Agent skill", "Install the doriterm skill for Claude Code, Codex, and other agents", [
+  row("mcp", "MCP clients", "Connect local MCP clients to Doriterm", ["mcp", "model context protocol", "integrations"]),
+  row("skills", "Agent Skills", "Install the doriterm skill for Claude Code, Codex, and other agents", [
     "skill",
     "skills",
     "agent skill",
     "claude",
     "codex",
+    "opencode",
     "doriterm",
   ]),
   row("machines", "Open an invite on your host", "One command on the host", ["invite", "pair", "join"]),

@@ -1,4 +1,5 @@
-import { Input, cn, fieldLabelClass, groupHeadingClass } from "@doriface/ui";
+import { IconButton, Input, cn, groupHeadingClass } from "@doriface/ui";
+import { Search, X } from "lucide-react";
 import { useId, type ReactNode } from "react";
 
 /**
@@ -8,13 +9,18 @@ import { useId, type ReactNode } from "react";
  */
 
 /** The blocks of one section (a notice, a preview, a toolbar, the sub-groups), 16 px apart. */
-export const sectionStackClass = "flex flex-col gap-4";
+export const sectionStackClass = "flex flex-col gap-5";
 
 /** A list row that is not a SettingRow (a link into a sheet, a key, a pack): SettingRow's height, padding and divider. */
 export const listRowClass = "flex min-h-12 items-center gap-3 border-b border-border py-2.5 last:border-b-0";
 
 /** A trailing value or a row's second line: the reading size, quieter by colour, not by size. */
 export const rowValueClass = "text-prose text-muted-foreground";
+
+/** Modern grouped card container wrapping a cohesive run of settings rows. */
+export function SettingsCard({ children, className }: { readonly children: ReactNode; readonly className?: string }) {
+  return <div className={cn("rounded-lg border border-border bg-surface/55 px-4", className)}>{children}</div>;
+}
 
 /** A section's or the search results' title, with the section's own actions (Edit, Done) on the same line. */
 export function SectionHeader({
@@ -27,7 +33,7 @@ export function SectionHeader({
   readonly actions?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 pb-1">
+    <div className="flex items-center justify-between gap-3 pb-2">
       <h2 id={id} className="text-xl font-semibold text-foreground">
         {title}
       </h2>
@@ -36,11 +42,12 @@ export function SectionHeader({
   );
 }
 
-/** A titled run of rows inside a section (Font, Notify me when, In the bar), its heading 4 px over the first row. */
+/** A titled run of rows inside a section (Font, Notify me when, In the bar), grouped in a clean card surface. */
 export function Subgroup({
   title,
   id,
   label,
+  card = true,
   className,
   children,
   ...data
@@ -49,6 +56,8 @@ export function Subgroup({
   readonly id?: string;
   /** Names the group for assistive tech when it has no id to be labelled by. */
   readonly label?: string;
+  /** Wraps children in a grouped SettingsCard container; disable when children already render cards. */
+  readonly card?: boolean;
   readonly className?: string;
   readonly children: ReactNode;
   readonly [data: `data-${string}`]: string | undefined;
@@ -60,10 +69,10 @@ export function Subgroup({
       {...(label === undefined ? {} : { "aria-label": label })}
       className="flex flex-col"
     >
-      <h3 id={id} className={cn("pb-1", groupHeadingClass, className)}>
+      <h3 id={id} className={cn("pb-1.5 pl-0.5", groupHeadingClass, className)}>
         {title}
       </h3>
-      {children}
+      {card ? <SettingsCard>{children}</SettingsCard> : children}
     </section>
   );
 }
@@ -92,18 +101,30 @@ export function SettingsToolbar({
   const id = useId();
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap">
-      <div className="flex min-w-0 items-center gap-2 sm:min-w-48 sm:flex-1">
-        <label htmlFor={id} className={cn("shrink-0", fieldLabelClass)}>
-          Search<span className="sr-only"> {name}</span>
+      <div className="relative flex min-w-0 items-center sm:min-w-48 sm:flex-1">
+        <label htmlFor={id} className="sr-only">
+          Search {name}
         </label>
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
           id={id}
           type="search"
-          className="h-(--control-sm) min-w-0 flex-1"
+          className={cn("h-(--control-sm) min-w-0 flex-1 pl-8", query !== "" && "pr-7")}
           placeholder={placeholder}
           value={query}
           onValueChange={onQuery}
         />
+        {query === "" ? null : (
+          <IconButton
+            label={`Clear ${name} search`}
+            icon={<X />}
+            onClick={() => onQuery("")}
+            className="absolute top-1/2 right-1 size-5 -translate-y-1/2 [&_svg:not([data-slot=spinner])]:size-3"
+          />
+        )}
       </div>
       <div>{reset}</div>
       <div className="col-span-2 flex flex-wrap items-center gap-2">{actions}</div>

@@ -1,5 +1,5 @@
-import { Button, IconButton, Input, ScrollArea, Tab, TabList, Tabs, cn, fieldLabelClass } from "@doriface/ui";
-import { ArrowLeft, X } from "lucide-react";
+import { Button, IconButton, Input, Notice, ScrollArea, Tab, TabList, Tabs, cn } from "@doriface/ui";
+import { ArrowLeft, Search, X } from "lucide-react";
 import {
   useCallback,
   useId,
@@ -13,6 +13,7 @@ import {
 import { currentPlatform, triggerKeys } from "../keys/trigger.ts";
 import { useActionHandler } from "../keys/dispatcher.ts";
 import { stepTerminalFont } from "../workspace/use-app-actions.ts";
+import { AgentSkillsSection } from "../settings/agent-skills-section.tsx";
 import { AppearanceSection } from "../settings/appearance-section.tsx";
 import { BoatSection } from "../settings/boat-section.tsx";
 import { ConnectionSection } from "../settings/connection-section.tsx";
@@ -38,11 +39,17 @@ import { VoiceSection } from "../settings/voice-section.tsx";
 import { useBrowserMembership } from "../mesh/membership-state.ts";
 import { desktopBridge } from "../desktop/bridge.ts";
 import { BrowserInvite } from "../settings/browser-invite.tsx";
-import { CONNECT_GROUP, SECTIONS, sectionFromLink, type SectionId } from "../settings/settings-sections.tsx";
+import {
+  CONNECT_GROUP,
+  SECTIONS,
+  SETTINGS_GROUPS,
+  sectionFromLink,
+  type SectionId,
+} from "../settings/settings-sections.tsx";
 import { matchSections } from "../settings/settings-search.ts";
 import { matchSettings, type SettingHit } from "../settings/setting-rows.ts";
 import { SettingHits, useLandOn } from "../settings/settings-hits.tsx";
-import { SectionHeader } from "../settings/settings-layout.tsx";
+import { SectionHeader, SettingsCard } from "../settings/settings-layout.tsx";
 
 /**
  * What a link asked for (a hash, so it survives a reload): its section, and the group to land on when an older link named
@@ -58,16 +65,18 @@ function firstLanding(): { readonly section: SectionId; readonly landing: Settin
 function Group({
   title,
   id,
+  card = true,
   children,
 }: {
   readonly title: string;
   readonly id?: string;
+  readonly card?: boolean;
   readonly children: ReactNode;
 }) {
   return (
     <section className="flex flex-col">
       <SectionHeader title={title} {...(id === undefined ? {} : { id })} />
-      {children}
+      {card ? <SettingsCard>{children}</SettingsCard> : children}
     </section>
   );
 }
@@ -79,7 +88,6 @@ function Lead({ children }: { readonly children: ReactNode }) {
 
 /**
  * The one search over every section; drawn in the phone header and in the desktop navigation, each with its own id.
- * `inline` puts the label beside the field, so the phone's title row keeps its height (#1460).
  */
 function SearchSettings({
   query,
@@ -96,26 +104,32 @@ function SearchSettings({
 }) {
   const id = useId();
   return (
-    <div className={inline ? "flex items-center gap-2" : "flex flex-col gap-1"}>
-      <label htmlFor={id} className={cn(inline ? "shrink-0" : "px-0.5", fieldLabelClass)}>
-        {inline ? (
-          <>
-            Search<span className="sr-only"> settings</span>
-          </>
-        ) : (
-          "Search settings"
-        )}
+    <div className={cn("relative", inline && "min-w-0 flex-1")}>
+      <label htmlFor={id} className="sr-only">
+        Search settings
       </label>
+      <Search
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+      />
       <Input
         ref={inputRef}
         id={id}
-        className={cn(inline && "min-w-0 flex-1")}
+        className={cn("h-8 pl-8 text-sm", query !== "" && "pr-7")}
         type="search"
-        placeholder="e.g. theme or relay"
+        placeholder="Search settings…"
         value={query}
         onValueChange={onQuery}
         onKeyDown={onKeyDown}
       />
+      {query === "" ? null : (
+        <IconButton
+          label="Clear settings search"
+          icon={<X />}
+          onClick={() => onQuery("")}
+          className="absolute top-1/2 right-1 size-6 -translate-y-1/2 [&_svg:not([data-slot=spinner])]:size-3"
+        />
+      )}
     </div>
   );
 }
@@ -241,35 +255,46 @@ export function SettingsRoute() {
             </>
           )}
         </div>
-        <div className="shrink-0">
+        <div className="mb-2 shrink-0">
           <SearchSettings query={query} onQuery={onQuery} onKeyDown={onSearchKey} inputRef={field} />
         </div>
         {/* The sections scroll on their own, so a short window never takes the title row, which drags the window (#1915).
             The viewport's padding, taken back by the margins, is room for each button's focus ring, which the scroller
             would otherwise cut; scroll-padding keeps that room when the keyboard scrolls a button into view. */}
         <ScrollArea slot="settings-sections" className="-mx-2 -mb-1 flex-1" viewportClassName="scroll-py-1 px-2 py-1">
-          <div className="flex flex-col gap-px">
+          <div className="flex flex-col gap-3 pb-2">
             {nothing}
-            {shown.map((entry) => (
-              <Button
-                key={entry.id}
-                variant="ghost"
-                aria-current={entry.id === section ? "page" : undefined}
-                onClick={() => setSection(entry.id)}
-                className={cn(
-                  "shrink-0 justify-start gap-2.5 px-2 text-sm [&_svg:not([data-slot=spinner])]:size-3.5",
-                  entry.id === section && "bg-selected text-foreground",
-                )}
-              >
-                {entry.icon}
-                {entry.label}
-              </Button>
-            ))}
+            {SETTINGS_GROUPS.map((group) => {
+              const items = shown.filter((entry) => entry.group === group);
+              if (items.length === 0) return null;
+              return (
+                <div key={group} className="flex flex-col gap-px">
+                  <p className="px-2 pb-1 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground/75 uppercase">
+                    {group}
+                  </p>
+                  {items.map((entry) => (
+                    <Button
+                      key={entry.id}
+                      variant="ghost"
+                      aria-current={entry.id === section ? "page" : undefined}
+                      onClick={() => setSection(entry.id)}
+                      className={cn(
+                        "shrink-0 justify-start gap-2.5 px-2 text-sm [&_svg:not([data-slot=spinner])]:size-3.5",
+                        entry.id === section && "bg-selected text-foreground",
+                      )}
+                    >
+                      {entry.icon}
+                      {entry.label}
+                    </Button>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </ScrollArea>
       </nav>
       <ScrollArea slot="settings-body" className="flex-1">
-        <div ref={body} className="flex max-w-2xl flex-col gap-8 px-4 py-6 md:px-8">
+        <div ref={body} className="mx-auto flex w-full max-w-2xl flex-col gap-7 px-4 py-6 md:px-8">
           {hits.length === 0 ? null : <SettingHits hits={hits} onOpen={open} onLeave={() => field.current?.focus()} />}
           {/* The Update row fails alone: a throw there must not take every section with it. */}
           {update === null ? null : (
@@ -295,10 +320,7 @@ export function SettingsRoute() {
                   <Lead>This browser is a member of the mesh. Each machine has its own connection.</Lead>
                 ) : (
                   <Lead>
-                    This app talks to one host: the computer that runs your terminals. Here is which host it reaches,
-                    whether it is there now, this device's own settings, and under Advanced connection the route this
-                    app takes to that host. The defaults work for everyone; change them only for a self-hosted relay or
-                    a development host.
+                    Manage this device's local host, paired devices, and connection route. Defaults work out of the box.
                   </Lead>
                 )}
                 <Group title={joinedBrowser ? "This member" : "Host"}>
@@ -307,65 +329,79 @@ export function SettingsRoute() {
                 <Group title="This device">
                   <DeviceSection />
                 </Group>
-                {!joinedBrowser && desktopMcp() !== null ? (
-                  <Group title="MCP">
-                    <McpSection />
-                  </Group>
-                ) : null}
                 {!joinedBrowser ? (
-                  <Group title="Advanced connection">
-                    <ConnectionSection />
-                  </Group>
+                  <details className="group rounded-lg border border-border bg-surface/40">
+                    <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium text-foreground select-none [&::-webkit-details-marker]:hidden">
+                      <span>Advanced connection</span>
+                      <span className="text-xs text-muted-foreground group-open:hidden">Show</span>
+                      <span className="hidden text-xs text-muted-foreground group-open:inline">Hide</span>
+                    </summary>
+                    <div className="border-t border-border px-4 pb-2">
+                      <ConnectionSection />
+                    </div>
+                  </details>
                 ) : null}
               </>
             ) : section === "machines" ? (
               <>
-                {joinedBrowser ? (
-                  <Lead>These are the machines in your mesh. Each row shows this browser's own connection.</Lead>
-                ) : (
-                  <Lead>
-                    These are the computers in your mesh that this host reaches. Connecting a machine joins it to your
-                    mesh.
-                  </Lead>
-                )}
-                <Group title="Machines">
-                  {!joinedBrowser ? <MembersSection /> : null}
-                  <MachinesSection />
-                  {/* What a row's state means sits under the rows, where a reader meets it: on a phone the list leads (#1007). */}
-                  {!joinedBrowser ? (
-                    <p className="max-w-measure pt-3 text-prose text-pretty text-muted-foreground">
-                      A machine that answers reads Connected, one still being dialled reads Connecting, and one that
-                      needs a login says so; when a machine is offline the row says when it was last seen and, where the
-                      host knows a cause, what it is.
-                    </p>
-                  ) : null}
+                <Lead>
+                  {joinedBrowser
+                    ? "Machines in your mesh and this browser's connection to each."
+                    : "Computers in your mesh that this host reaches. Connect a machine or approve join requests below."}
+                </Lead>
+                <Group title="Machines" card={false}>
+                  <div className="flex flex-col gap-3">
+                    {!joinedBrowser ? <MembersSection /> : null}
+                    <SettingsCard className="py-1">
+                      <MachinesSection />
+                    </SettingsCard>
+                  </div>
                 </Group>
                 {/* Connecting a machine joins it to the mesh, so it is on this screen, under the rows it adds to. */}
-                <Group title="Connect a machine" id={CONNECT_GROUP}>
-                  <p className="pb-1 text-prose text-pretty text-muted-foreground">
-                    One command on this host opens an invite, and the other computer or phone joins with it. A join
-                    waits for your approval under In your mesh.
-                  </p>
-                  <PairSection />
+                <Group title="Connect a machine" id={CONNECT_GROUP} card={false}>
+                  <SettingsCard className="py-3">
+                    <p className="pb-2 text-prose text-pretty text-muted-foreground">
+                      Run one command on this host to open an invite, then approve the join under In your mesh.
+                    </p>
+                    <PairSection />
+                  </SettingsCard>
                 </Group>
-                <Group title="In your mesh">
-                  <BrowserInvite />
-                  <MeshSection attentionOnly={joinedBrowser} />
+                <Group title="In your mesh" card={false}>
+                  <SettingsCard className="py-1">
+                    <BrowserInvite />
+                    <MeshSection attentionOnly={joinedBrowser} />
+                  </SettingsCard>
                 </Group>
               </>
+            ) : section === "skills" ? (
+              <Group title="Agent Skills" card={false}>
+                <AgentSkillsSection />
+              </Group>
+            ) : section === "mcp" ? (
+              <Group title="MCP">
+                {!joinedBrowser && desktopMcp() !== null ? (
+                  <McpSection />
+                ) : (
+                  <div className="py-3">
+                    <Notice tone="info" title="Desktop host only">
+                      MCP server settings are managed from the Doriterm desktop app running on your host computer.
+                    </Notice>
+                  </div>
+                )}
+              </Group>
             ) : section === "boat" ? (
-              <Group title="Boat.dev">
+              <Group title="Boat.dev" card={false}>
                 <BoatSection />
               </Group>
             ) : section === "terminal" ? (
-              <Group title="Terminal">
+              <Group title="Terminal" card={false}>
                 <TerminalSection />
               </Group>
             ) : section === "keyboard" ? (
               // The section draws its own heading, because the heading row carries Edit and Done.
               <KeyboardSection />
             ) : section === "notifications" ? (
-              <Group title="Notifications">
+              <Group title="Notifications" card={false}>
                 <NotificationsSection />
               </Group>
             ) : section === "appearance" ? (
@@ -373,7 +409,7 @@ export function SettingsRoute() {
                 <AppearanceSection />
               </Group>
             ) : section === "keybindings" ? (
-              <Group title="Keybindings">
+              <Group title="Keybindings" card={false}>
                 <KeybindingsSection />
               </Group>
             ) : (

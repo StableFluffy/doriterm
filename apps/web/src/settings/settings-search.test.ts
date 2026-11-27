@@ -6,17 +6,19 @@ const found = (query: string) => matchSections(SECTIONS, query).map((section) =>
 
 describe("searching across settings (#1460)", () => {
   test.each([
-    // Terminal's own `theme` key and Keyboard's shortcut packs are settings of theirs (#1528).
-    ["theme", ["terminal", "appearance"]],
-    ["font", ["terminal", "appearance"]],
+    // Terminal's own `theme` key and Phone key bar's shortcut packs are settings of theirs (#1528).
+    ["theme", ["appearance", "terminal"]],
+    ["font", ["appearance", "terminal"]],
     ["relay", ["device"]],
-    ["shortcut", ["keyboard", "keybindings"]],
+    ["shortcut", ["keybindings", "keyboard"]],
     ["push", ["notifications"]],
+    ["skill", ["skills"]],
+    ["mcp", ["mcp"]],
     ["dictation", ["voice"]],
     ["invite", ["machines"]],
     ["approval", ["machines"]],
     ["pair a device", ["device"]],
-    ["revoke", ["device", "machines"]],
+    ["revoke", ["machines", "device"]],
     ["chords", ["keyboard"]],
   ] as const)("%s finds the sections that hold it, in list order", (query, ids) => {
     expect(found(query)).toEqual([...ids]);

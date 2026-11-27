@@ -11,10 +11,12 @@ describe("connecting a machine is part of Machines", () => {
     expect(sectionFromLink(hash)).toEqual({ section: "machines", group: CONNECT_GROUP });
   });
 
-  test("a link names a section by its id, and anything else opens This device", () => {
+  test("a link names a section by its id, and anything else opens Appearance", () => {
     expect(sectionFromLink("#machines")).toEqual({ section: "machines" });
+    expect(sectionFromLink("#skills")).toEqual({ section: "skills" });
+    expect(sectionFromLink("#mcp")).toEqual({ section: "mcp" });
     expect(sectionFromLink("#voice")).toEqual({ section: "voice" });
-    expect(sectionFromLink("")).toEqual({ section: "device" });
-    expect(sectionFromLink("#nope")).toEqual({ section: "device" });
+    expect(sectionFromLink("")).toEqual({ section: "appearance" });
+    expect(sectionFromLink("#nope")).toEqual({ section: "appearance" });
   });
 });
