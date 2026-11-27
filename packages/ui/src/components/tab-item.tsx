@@ -167,7 +167,7 @@ function TabNameEdit({
       value={value}
       maxLength={80}
       placeholder={initial}
-      className="relative z-[2] h-5 min-w-0 flex-1 rounded-xs bg-surface/80 px-1 text-[0.8rem] text-foreground ring-1 ring-ring/70 outline-none"
+      className="relative z-[2] h-5 min-w-0 flex-1 rounded-xs bg-surface/80 px-1 text-[0.8rem] text-foreground ring-1 ring-border outline-none focus:ring-ring/55"
       onFocus={(event) => event.currentTarget.select()}
       onChange={(event) => setValue(event.currentTarget.value)}
       onBlur={() => finish(true)}

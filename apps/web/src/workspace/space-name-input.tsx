@@ -89,7 +89,7 @@ export function SpaceNameInput({ space, onClose }: SpaceNameInputProps) {
           readOnly={busy}
           className={cn(
             "h-6 min-w-0 flex-1 rounded-xs bg-surface/80 px-1.5 text-sm text-foreground ring-1 outline-none",
-            error !== null ? "ring-destructive" : "ring-ring/70",
+            error !== null ? "ring-destructive" : "ring-border focus:ring-ring/55",
           )}
           onFocus={(event) => event.currentTarget.select()}
           onChange={(event) => {
