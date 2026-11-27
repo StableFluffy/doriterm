@@ -6,7 +6,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { type DragState, landingIndex, landingLeft, measure, type Settle, type Slot } from "./tab-drop-geometry.ts";
+import {
+  clampOffset,
+  type DragState,
+  landingIndex,
+  landingLeft,
+  measure,
+  type Settle,
+  type Slot,
+} from "./tab-drop-geometry.ts";
 
 /** Pointer travel before a press becomes a drag; less is still a click that selects. */
 export const DRAG_THRESHOLD_PX = 4;
@@ -36,7 +44,12 @@ interface Press {
   outside: boolean;
   clientX: number;
   clientY: number;
-  dragging: { readonly slots: readonly Slot[]; readonly gap: number; readonly startScroll: number } | null;
+  dragging: {
+    readonly slots: readonly Slot[];
+    readonly gap: number;
+    readonly startScroll: number;
+    readonly maxScroll: number;
+  } | null;
 }
 
 export interface TabDrag {
@@ -124,12 +137,12 @@ export function useTabDrag(
     const element = list.current;
     if (current === null || current.dragging === null || element === null) return null;
     const { slots, gap, startScroll } = current.dragging;
-    const offset = current.clientX - current.startX + element.scrollLeft - startScroll;
+    const rawOffset = current.clientX - current.startX + element.scrollLeft - startScroll;
     const next: DragState = {
       id: current.id,
       from: current.from,
-      to: landingIndex(slots, current.from, offset),
-      offset,
+      to: landingIndex(slots, current.from, rawOffset),
+      offset: clampOffset(slots, current.from, rawOffset),
       slots,
       gap,
     };
@@ -194,7 +207,7 @@ export function useTabDrag(
         : 0;
       const scrollEdges = (): void => {
         const element = list.current;
-        if (element !== null && current.dragging !== null && !current.outside) {
+        if (element !== null && current.dragging !== null && !current.outside && current.dragging.maxScroll > 0) {
           const box = element.getBoundingClientRect();
           const step =
             current.clientX < box.left + EDGE_PX
@@ -203,8 +216,11 @@ export function useTabDrag(
                 ? EDGE_STEP_PX
                 : 0;
           if (step !== 0) {
-            element.scrollLeft += step;
-            update();
+            const nextScroll = Math.min(Math.max(element.scrollLeft + step, 0), current.dragging.maxScroll);
+            if (nextScroll !== element.scrollLeft) {
+              element.scrollLeft = nextScroll;
+              update();
+            }
           }
         }
         frame = window.requestAnimationFrame(scrollEdges);
@@ -222,7 +238,11 @@ export function useTabDrag(
         const element = list.current;
         if (current.dragging === null) {
           if (element === null || Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-          current.dragging = { ...measure(element), startScroll: element.scrollLeft };
+          current.dragging = {
+            ...measure(element),
+            startScroll: element.scrollLeft,
+            maxScroll: Math.max(0, element.scrollWidth - element.clientWidth),
+          };
           window.getSelection()?.removeAllRanges();
           latestStart.current?.();
           frame = window.requestAnimationFrame(scrollEdges);
