@@ -112,7 +112,10 @@ export function SettingsToolbar({
         <Input
           id={id}
           type="search"
-          className={cn("h-(--control-sm) min-w-0 flex-1 pl-8", query !== "" && "pr-7")}
+          className={cn(
+            "h-(--control-sm) min-w-0 flex-1 border-border bg-raised/50 pl-8 focus-visible:bg-surface",
+            query !== "" && "pr-7",
+          )}
           placeholder={placeholder}
           value={query}
           onValueChange={onQuery}

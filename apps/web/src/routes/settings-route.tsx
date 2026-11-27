@@ -115,7 +115,7 @@ function SearchSettings({
       <Input
         ref={inputRef}
         id={id}
-        className={cn("h-8 pl-8 text-sm", query !== "" && "pr-7")}
+        className={cn("h-8 border-border bg-raised/50 pl-8 text-sm focus-visible:bg-surface", query !== "" && "pr-7")}
         type="search"
         placeholder="Search settings…"
         value={query}

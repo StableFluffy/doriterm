@@ -5,6 +5,7 @@ import {
   Bell,
   Cloud,
   Columns2,
+  Folder,
   FolderPlus,
   HelpCircle,
   Keyboard,
@@ -115,11 +116,34 @@ export function Palette({ terminals: listed, host, route, actions, spaces, onOpe
       const icon = commandIcon(command);
       return icon === undefined ? command : Object.assign({}, command, { icon });
     });
-    return [...base, ...SETTINGS_JUMPS];
+    const spaceCommands: Command[] = spaces.flatMap((space): Command[] => {
+      const first = space.addresses[0];
+      if (first === undefined) return [];
+      return [
+        {
+          id: `space:${first}`,
+          label: space.name,
+          group: "Spaces",
+          icon: <Folder aria-hidden />,
+          hint: `${space.tabs} ${space.tabs === 1 ? "tab" : "tabs"}`,
+        },
+      ];
+    });
+    const firstNonAgent = base.findIndex((command) => command.group !== "Agents");
+    const withSpaces =
+      firstNonAgent === -1
+        ? [...base, ...spaceCommands]
+        : [...base.slice(0, firstNonAgent), ...spaceCommands, ...base.slice(firstNonAgent)];
+    return [...withSpaces, ...SETTINGS_JUMPS];
   }, [terminals, host, route, actions, spaces, overrides]);
   const frame = useRef<HTMLDivElement>(null);
   useOverlayFocus(frame, '[role="combobox"]');
   const run = (id: string): void => {
+    if (id.startsWith("space:")) {
+      onClose();
+      onOpenTerminal(id.slice("space:".length));
+      return;
+    }
     const choice = choiceOf(id);
     // An action nobody took leaves the palette open on its row instead of closing on nothing.
     if (choice.kind === "action") return void (runAction(choice.id) && onClose());

@@ -1,5 +1,5 @@
 import type { Terminal } from "@doriface/protocol";
-import { IconButton, Kbd, SidebarFooter, SidebarFooterItem, Tooltip, cn } from "@doriface/ui";
+import { IconButton, SidebarFooter, SidebarFooterItem, cn } from "@doriface/ui";
 import { Link } from "@tanstack/react-router";
 import { PanelLeftOpen, Plus, Search, Settings } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
@@ -81,18 +81,15 @@ export function Sidebar({
         )}
       >
         {rail ? null : (
-          <Tooltip label="Command palette" {...(paletteKeys === undefined ? {} : { keys: paletteKeys })}>
-            <button
-              type="button"
-              aria-label="Command palette"
+          <>
+            <div className="min-w-0 flex-1" />
+            <IconButton
+              label="Command palette"
+              {...(paletteKeys === undefined ? {} : { keys: paletteKeys })}
+              icon={<Search />}
               onClick={onPalette}
-              className="ml-auto flex h-7 min-w-0 max-w-[144px] flex-1 items-center gap-1.5 rounded-md border border-border/70 bg-raised/45 px-2 text-xs text-muted-foreground transition-colors duration-(--duration-press) hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring"
-            >
-              <Search aria-hidden className="size-3 shrink-0" />
-              <span className="truncate">Search</span>
-              {paletteKeys === undefined ? null : <Kbd keys={paletteKeys} className="ml-auto shrink-0" />}
-            </button>
-          </Tooltip>
+            />
+          </>
         )}
       </div>
       {rail ? null : <SidebarFilterField />}
