@@ -58,7 +58,7 @@ export function ThemeBrowser({ options, dark, light, defaultKind, onPick, classN
               placeholder="Search themes, e.g. nord"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="pl-8"
+              className="border-border bg-raised/50 pl-8 focus-visible:bg-surface"
             />
           </div>
         </div>

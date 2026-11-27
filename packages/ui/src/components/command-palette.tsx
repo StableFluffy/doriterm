@@ -1,7 +1,8 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "../lib/cn.ts";
 import { Button } from "./button.tsx";
+import { IconButton } from "./icon-button.tsx";
 import { Kbd } from "./kbd.tsx";
 import { overlaySurface } from "./overlay.ts";
 import { agentCount, shownStatus, statusCounts, withStatus } from "./palette-status.ts";
@@ -41,7 +42,10 @@ export interface CommandPaletteProps {
 
 function matches(command: Command, query: string): boolean {
   const q = query.trim().toLowerCase();
-  return q === "" || command.label.toLowerCase().includes(q) || command.group.toLowerCase().includes(q);
+  if (q === "") return true;
+  const hint = typeof command.hint === "string" ? command.hint : "";
+  const haystack = `${command.group} ${command.label} ${hint}`.toLowerCase();
+  return q.split(/\s+/).every((token) => haystack.includes(token));
 }
 
 /**
@@ -111,7 +115,19 @@ export function CommandPalette({
           onKeyDown={onKeyDown}
           className="-mx-1.5 h-12 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-lg text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-solid focus-visible:outline-ring"
         />
-        <Kbd keys={["esc"]} />
+        {query === "" ? null : (
+          <IconButton
+            label="Clear query"
+            icon={<X />}
+            onClick={() => {
+              setQuery("");
+              setActive(0);
+              input.current?.focus();
+            }}
+            className="size-6 [&_svg:not([data-slot=spinner])]:size-3.5"
+          />
+        )}
+        <Kbd keys={["Esc"]} variant="plain" className="pr-0.5 text-muted-foreground/65" />
         {onCancel === undefined ? null : (
           <Button variant="ghost" size="sm" onClick={onCancel} className="-mr-2 hidden coarse:inline-flex">
             Cancel
@@ -194,7 +210,7 @@ export function CommandPalette({
                           {STATUS_LABEL[command.status]}
                         </span>
                       )}
-                      {command.keys === undefined ? null : <Kbd keys={command.keys} />}
+                      {command.keys === undefined ? null : <Kbd keys={command.keys} variant="plain" />}
                     </div>
                   );
                 })}
