@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { MemberEntry } from "../connection/mesh-connections.ts";
 import { connectionStore, useConnectionSettings, useMeshMembers } from "../connection/store.ts";
 import { RetryButton } from "../workspace/retry-button.tsx";
+import { showMachine } from "../mesh/membership-state.ts";
 
 const WORDS: Readonly<Record<MemberEntry["state"]["phase"], string>> = {
   open: "Connected",
@@ -101,7 +102,7 @@ export function MemberConnections({
                   <Button
                     variant="secondary"
                     onClick={() => {
-                      connectionStore.select(entry.target.hostId);
+                      void showMachine(entry.target.hostId);
                     }}
                   >
                     Switch to this machine
