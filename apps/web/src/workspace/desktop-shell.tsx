@@ -442,7 +442,7 @@ export function DesktopShell(props: DesktopShellProps) {
           {/* The page's one main landmark: the panes, between the tab strip and the status bar (#1378). */}
           <main className="flex min-h-0 min-w-0 flex-1 flex-col">
             {layout.tabs.length > 0 ? null : nothingOpen ? (
-              <NoTerminal onNew={onNew} onNewBoat={onNewBoat} />
+              <NoTerminal onNew={onNew} />
             ) : (
               <QuietBusy label="Restoring your tabs" text="Restoring your tabs…" className="flex-1" />
             )}
