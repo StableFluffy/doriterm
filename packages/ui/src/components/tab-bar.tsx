@@ -52,6 +52,12 @@ export interface TabBarProps {
   readonly newMenu?: ReactNode;
   /** Asks for a tab's name: a double-click on it, as herdr-app's strip, and Rename tab in its menu. */
   readonly onRename?: (id: string) => void;
+  /** Tab id currently edited inline right inside its pill, if any. */
+  readonly editingId?: string | null;
+  /** Stored custom name of the tab being edited inline (empty when auto-named). */
+  readonly editingValue?: string;
+  readonly onRenameCommit?: (id: string, name: string) => void;
+  readonly onRenameCancel?: () => void;
   /** Moves a tab so it ends at index `to` of `tabs`; without it tabs neither drag nor offer Move in their menu. */
   readonly onMove?: (id: string, to: number) => void;
   /** Called while a tab is dragged below the tab strip (or null when returning/ending). Return true to claim the drag. */
@@ -88,6 +94,10 @@ export function TabBar({
   newDisabled = false,
   newMenu,
   onRename,
+  editingId = null,
+  editingValue,
+  onRenameCommit,
+  onRenameCancel,
   onMove,
   onDragOutside,
   onDropOutside,
@@ -196,6 +206,10 @@ export function TabBar({
         dragging={drag?.id === tab.id}
         lifted={lifted === tab.id}
         detached={detached === tab.id}
+        editing={editingId === tab.id}
+        {...(editingId === tab.id && editingValue !== undefined ? { editingValue } : {})}
+        {...(onRenameCommit === undefined ? {} : { onRenameCommit: (name) => onRenameCommit(tab.id, name) })}
+        {...(onRenameCancel === undefined ? {} : { onRenameCancel })}
         arrived={drawn.before.has(tab.arrivalKey ?? tab.id)}
         offset={place.offset}
         placeClass={place.className}
