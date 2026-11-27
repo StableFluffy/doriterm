@@ -1,9 +1,20 @@
-import { Bell, Keyboard, Mic, MonitorSmartphone, Network, Palette, PanelBottom, SquareTerminal } from "lucide-react";
+import {
+  Bell,
+  Cloud,
+  Keyboard,
+  Mic,
+  MonitorSmartphone,
+  Network,
+  Palette,
+  PanelBottom,
+  SquareTerminal,
+} from "lucide-react";
 
 /** Settings' sections in the order the navigation lists them (DESIGN.md (d)). */
 export const SECTIONS = [
   { id: "device", label: "This device", icon: <MonitorSmartphone /> },
   { id: "machines", label: "Machines", icon: <Network /> },
+  { id: "boat", label: "Boat.dev", icon: <Cloud /> },
   { id: "terminal", label: "Terminal", icon: <SquareTerminal /> },
   { id: "keyboard", label: "Keyboard", icon: <PanelBottom /> },
   { id: "notifications", label: "Notifications", icon: <Bell /> },

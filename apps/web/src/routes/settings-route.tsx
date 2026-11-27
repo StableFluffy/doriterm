@@ -14,6 +14,7 @@ import { currentPlatform, triggerKeys } from "../keys/trigger.ts";
 import { useActionHandler } from "../keys/dispatcher.ts";
 import { stepTerminalFont } from "../workspace/use-app-actions.ts";
 import { AppearanceSection } from "../settings/appearance-section.tsx";
+import { BoatSection } from "../settings/boat-section.tsx";
 import { ConnectionSection } from "../settings/connection-section.tsx";
 import { DeviceSection } from "../settings/device-section.tsx";
 import { DevicesSection } from "../settings/devices-section.tsx";
@@ -342,6 +343,10 @@ export function SettingsRoute() {
                   <MeshSection attentionOnly={joinedBrowser} />
                 </Group>
               </>
+            ) : section === "boat" ? (
+              <Group title="Boat.dev">
+                <BoatSection />
+              </Group>
             ) : section === "terminal" ? (
               <Group title="Terminal">
                 <TerminalSection />
