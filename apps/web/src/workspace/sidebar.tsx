@@ -1,5 +1,5 @@
 import type { Terminal } from "@doriface/protocol";
-import { Kbd, SidebarFooter, SidebarFooterItem, Tooltip, cn } from "@doriface/ui";
+import { IconButton, Kbd, SidebarFooter, SidebarFooterItem, Tooltip, cn } from "@doriface/ui";
 import { Link } from "@tanstack/react-router";
 import { PanelLeftOpen, Plus, Search, Settings } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
@@ -107,26 +107,35 @@ export function Sidebar({
       </RegionBoundary>
       <SidebarFooter rail={rail}>
         {rail ? (
-          <SidebarFooterItem
-            rail
-            icon={<PanelLeftOpen aria-hidden />}
-            label="Expand sidebar"
-            onClick={onExpand ?? (() => setSize({ rail: false }))}
-          />
-        ) : null}
-        <SidebarFooterItem
-          rail={rail}
-          icon={<Settings aria-hidden />}
-          label="Settings"
-          {...(update === null ? {} : { dot: "update ready" })}
-          render={<Link to="/settings" />}
-        />
-        <SidebarFooterItem
-          rail={rail}
-          icon={<Plus aria-hidden />}
-          label="Add machine"
-          onClick={machines.openAddMachine}
-        />
+          <>
+            <SidebarFooterItem
+              rail
+              icon={<PanelLeftOpen aria-hidden />}
+              label="Expand sidebar"
+              onClick={onExpand ?? (() => setSize({ rail: false }))}
+            />
+            <SidebarFooterItem
+              rail
+              icon={<Settings aria-hidden />}
+              label="Settings"
+              {...(update === null ? {} : { dot: "update ready" })}
+              render={<Link to="/settings" />}
+            />
+            <SidebarFooterItem rail icon={<Plus aria-hidden />} label="Add machine" onClick={machines.openAddMachine} />
+          </>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1">
+              <SidebarFooterItem
+                icon={<Settings aria-hidden />}
+                label="Settings"
+                {...(update === null ? {} : { dot: "update ready" })}
+                render={<Link to="/settings" />}
+              />
+            </div>
+            <IconButton label="Add machine" icon={<Plus />} size="md" onClick={machines.openAddMachine} />
+          </>
+        )}
       </SidebarFooter>
       {drawer || railProp !== undefined ? null : (
         <SidebarEdge width={sidebarWidth} rail={rail} railWidth={railPx} onChange={setSize} onDragging={setDragging} />
