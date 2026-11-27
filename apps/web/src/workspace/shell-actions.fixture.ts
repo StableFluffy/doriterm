@@ -64,6 +64,7 @@ export const layout: Layout = {
   dropTerminal: () => Promise.resolve(false),
   takesTab: () => false,
   dropTab: () => Promise.resolve(false),
+  detachPane: () => Promise.resolve(false),
   moveTab: noop,
   renameTab: () => Promise.resolve(),
   pinTab: () => Promise.resolve(),

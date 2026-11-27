@@ -16,6 +16,8 @@ export interface PaneDragState {
   readonly tab: string;
   readonly pane: string;
   readonly target: PaneDropTarget | null;
+  /** True when the dragged pane header is pulled up onto the tab strip to pop it into its own tab. */
+  readonly detach: boolean;
 }
 
 export interface PaneDrag {
@@ -76,10 +78,11 @@ export function usePaneDrag(
   rects: (tab: string) => ReadonlyMap<string, Rect> | undefined,
   onDrop: (tab: string, pane: string, target: PaneDropTarget) => void,
   pad = 0,
+  onDetach?: (tab: string, pane: string) => void,
 ): PaneDrag {
   const [drag, setDrag] = useState<PaneDragState | null>(null);
-  const latest = useRef({ rects, onDrop, pad });
-  latest.current = { rects, onDrop, pad };
+  const latest = useRef({ rects, onDrop, pad, onDetach });
+  latest.current = { rects, onDrop, pad, onDetach };
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => () => stop.current?.(), []);
 
@@ -98,26 +101,40 @@ export function usePaneDrag(
           const travel = Math.max(Math.abs(moved.clientX - startX), Math.abs(moved.clientY - startY));
           if (!moving && travel < PANE_DRAG_THRESHOLD_PX) return;
           moving = true;
+          const detach =
+            latest.current.onDetach !== undefined &&
+            box.current !== null &&
+            moved.clientY < box.current.getBoundingClientRect().top - latest.current.pad;
           setDrag({
             tab,
             pane,
-            target: targetIn(
-              box.current,
-              latest.current.rects(tab),
-              pane,
-              moved.clientX,
-              moved.clientY,
-              latest.current.pad,
-            ),
+            detach,
+            target: detach
+              ? null
+              : targetIn(
+                  box.current,
+                  latest.current.rects(tab),
+                  pane,
+                  moved.clientX,
+                  moved.clientY,
+                  latest.current.pad,
+                ),
           });
         };
         const release = (up: PointerEvent): void => {
           if (up.pointerId !== pointerId) return;
-          const target = moving
-            ? targetIn(box.current, latest.current.rects(tab), pane, up.clientX, up.clientY, latest.current.pad)
-            : null;
+          const detach =
+            moving &&
+            latest.current.onDetach !== undefined &&
+            box.current !== null &&
+            up.clientY < box.current.getBoundingClientRect().top - latest.current.pad;
+          const target =
+            moving && !detach
+              ? targetIn(box.current, latest.current.rects(tab), pane, up.clientX, up.clientY, latest.current.pad)
+              : null;
           end();
-          if (target !== null) latest.current.onDrop(tab, pane, target);
+          if (detach) latest.current.onDetach?.(tab, pane);
+          else if (target !== null) latest.current.onDrop(tab, pane, target);
         };
         const key = (down: KeyboardEvent): void => {
           if (down.key !== "Escape") return;
