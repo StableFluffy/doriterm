@@ -3,7 +3,6 @@ import { CommandPalette, type Command } from "@doriface/ui";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
-  Cloud,
   Columns2,
   Folder,
   FolderPlus,
@@ -11,15 +10,14 @@ import {
   Keyboard,
   ListFilter,
   Mic,
+  MonitorSmartphone,
   Palette as PaletteIcon,
   PanelLeft,
-  Plug,
   Plus,
   Rows2,
   Search,
   Server,
   Settings,
-  Sparkles,
   Terminal as TerminalIcon,
   X,
   ZoomIn,
@@ -38,14 +36,13 @@ import type { ShellAction } from "./shell-actions.ts";
 import { useOverlayFocus } from "./use-overlay-focus.ts";
 
 const SETTINGS_JUMPS: readonly Command[] = [
-  { id: "settings:skills", label: "Settings: Agent Skills", group: "General", icon: <Sparkles aria-hidden /> },
   { id: "settings:appearance", label: "Settings: Appearance", group: "General", icon: <PaletteIcon aria-hidden /> },
-  { id: "settings:boat", label: "Settings: Boat.dev", group: "General", icon: <Cloud aria-hidden /> },
   { id: "settings:terminal", label: "Settings: Terminal", group: "General", icon: <TerminalIcon aria-hidden /> },
   { id: "settings:keybindings", label: "Settings: Keybindings", group: "General", icon: <Keyboard aria-hidden /> },
-  { id: "settings:machines", label: "Settings: Machines & Mesh", group: "General", icon: <Server aria-hidden /> },
-  { id: "settings:mcp", label: "Settings: MCP", group: "General", icon: <Plug aria-hidden /> },
+  { id: "settings:machines", label: "Settings: Machines", group: "General", icon: <Server aria-hidden /> },
+  { id: "settings:device", label: "Settings: This device", group: "General", icon: <MonitorSmartphone aria-hidden /> },
   { id: "settings:notifications", label: "Settings: Notifications", group: "General", icon: <Bell aria-hidden /> },
+  { id: "settings:voice", label: "Settings: Voice input", group: "General", icon: <Mic aria-hidden /> },
 ];
 
 function commandIcon(command: Command): ReactNode | undefined {
