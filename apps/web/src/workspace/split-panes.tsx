@@ -136,18 +136,30 @@ export function SplitPanes(props: SplitPanesProps) {
     ref,
     (tab) => laidOut.current.get(tab),
     (_tab, pane, target) => void layout.move(pane, target.pane, target.zone),
+    PANE_GAP,
   );
-  // A terminal dragged from the sidebar drops on the tab in view, as a pane dragged by its header does.
+  // A terminal dragged from the sidebar, or a tab dragged from the top tab bar, drops on the tab in view.
   const fromList = useTerminalDrag();
   useTerminalDropSurface({
     targetAt: (address, x, y) => {
       const tab = layout.active;
       if (tab === null || layout.zoomed !== null || !layout.takesTerminal(address, tab.key)) return null;
       const own = tab.panes.find((pane) => pane.address === address)?.id ?? "";
-      const target = targetIn(ref.current, laidOut.current.get(tab.key), own, x, y);
+      const target = targetIn(ref.current, laidOut.current.get(tab.key), own, x, y, PANE_GAP);
       return target === null ? null : { tab: tab.key, ...target };
     },
     drop: (address, target) => void layout.dropTerminal(address, target),
+    canDropTab: (sourceTab) => {
+      const tab = layout.active;
+      return tab !== null && layout.zoomed === null && layout.takesTab(sourceTab, tab.key);
+    },
+    tabTargetAt: (sourceTab, x, y) => {
+      const tab = layout.active;
+      if (tab === null || layout.zoomed !== null || !layout.takesTab(sourceTab, tab.key)) return null;
+      const target = targetIn(ref.current, laidOut.current.get(tab.key), "", x, y, PANE_GAP);
+      return target === null ? null : { tab: tab.key, ...target };
+    },
+    dropTab: (sourceTab, target) => void layout.dropTab(sourceTab, target),
   });
   // A divider drag lays panes out on every move; like a window resize it plays no motion, its release included: the
   // dropped drag stays on screen until its write lands, and that render changes the frame, so it moves no pane either.
