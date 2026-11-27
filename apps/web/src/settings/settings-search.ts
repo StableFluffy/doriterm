@@ -23,6 +23,8 @@ const SECTION_WORDS: Readonly<Record<SectionId, readonly string[]>> = {
     "connect through",
     "relay",
     "loopback",
+    "mcp",
+    "model context protocol",
   ],
   machines: [
     "mesh",
@@ -41,6 +43,10 @@ const SECTION_WORDS: Readonly<Record<SectionId, readonly string[]>> = {
     "phone",
     "command",
     "qr",
+    "skill",
+    "agent skill",
+    "claude",
+    "codex",
   ],
   boat: [
     "boat.dev",
